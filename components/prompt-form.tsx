@@ -1,13 +1,13 @@
 'use client'
 
 import * as React from 'react'
+import { useRef } from 'react'
 import Textarea from 'react-textarea-autosize'
-
+import dynamic from 'next/dynamic'
 import { useActions, useUIState } from 'ai/rsc'
 
 import { UserMessage } from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
-import { Button } from '@/components/ui/button'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
   Tooltip,
@@ -17,6 +17,8 @@ import {
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { usePromptVariable } from '@/components/ui/prompt-variable'
 
 export function PromptForm({
   input,
@@ -30,13 +32,39 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-
+  const [variable, setVariable] = React.useState([])
+  const {promptVariables, setPromptVariables} = usePromptVariable()
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
-
+  const fileInputRef = useRef(null);
+  
+  const handleFileChange = async (event) => {
+    const files = event.target.files;
+    if (files.length > 0) {
+      const formData = new FormData();
+      formData.append('file', files[0]); // Assuming single file upload, adjust as needed
+  
+      try {
+        const response = await fetch('/api/file', {
+          method: 'POST',
+          body: formData,
+          // Do not set Content-Type header for FormData
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
+        }
+  
+        const result = await response.json();
+        setPromptVariables(result)
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+  };
   return (
     <form
       ref={formRef}
@@ -69,17 +97,25 @@ export function PromptForm({
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                router.push('/new')
-              }}
-            >
-              <IconPlus />
-              <span className="sr-only">New Chat</span>
-            </Button>
+            <>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+                onClick={() => {
+                  fileInputRef.current.click(); // Trigger file input click
+                }}
+              >
+                <IconPlus />
+                <span className="sr-only">New Chat</span>
+              </Button>
+            </>
           </TooltipTrigger>
           <TooltipContent>New Chat</TooltipContent>
         </Tooltip>
