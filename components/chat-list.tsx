@@ -37,7 +37,7 @@ export function ChatList({ messages, session, isShared }: ChatList) {
               </p>
             </div>
           </div>
-          <Separator className="my-4" />
+          {/* <Separator className="my-4" /> */}
         </>
       ) : null}
 

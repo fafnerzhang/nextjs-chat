@@ -2,15 +2,13 @@
 
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
 import { cn } from '@/lib/utils'
-import { spinner } from '../ui/spinner'
+import { spinner } from './spinner'
 import { CodeBlock } from '../ui/codeblock'
 import { MemoizedReactMarkdown } from '../markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { useStreamableText } from '@/lib/hooks/use-streamable-text'
-import { MultiPromptMessage } from '@/components/ui/message'
-// Different types of message bubbles.
 
 export function UserMessage({ children }: { children: React.ReactNode }) {
   return (
@@ -130,5 +128,17 @@ export function SpinnerMessage() {
         {spinner}
       </div>
     </div>
+  )
+}
+
+export function MultiPromptMessage(result: any[] | null) {
+  return (
+    <>
+      {result?.map((item, index) => (
+        <div key={index}>
+          <div>{item}</div>
+        </div>
+      ))}
+    </>
   )
 }

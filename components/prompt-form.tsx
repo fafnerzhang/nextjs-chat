@@ -30,41 +30,15 @@ export function PromptForm({
   const router = useRouter()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const { submitUserMessage } = useActions()
+  const { submitUserMessage, streamMultiSubmit } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-  const [variable, setVariable] = React.useState([])
-  const {promptVariables, setPromptVariables} = usePromptVariable()
+  const { promptVariables, setPromptVariables } = usePromptVariable()
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
-  const fileInputRef = useRef(null);
-  
-  const handleFileChange = async (event) => {
-    const files = event.target.files;
-    if (files.length > 0) {
-      const formData = new FormData();
-      formData.append('file', files[0]); // Assuming single file upload, adjust as needed
-  
-      try {
-        const response = await fetch('/api/file', {
-          method: 'POST',
-          body: formData,
-          // Do not set Content-Type header for FormData
-        });
-  
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-  
-        const result = await response.json();
-        setPromptVariables(result)
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      }
-    }
-  };
+
   return (
     <form
       ref={formRef}
@@ -90,7 +64,8 @@ export function PromptForm({
         ])
 
         // Submit and get response message
-        const responseMessage = await submitUserMessage(value)
+        console.log('promptVariables', promptVariables)
+        const responseMessage = await streamMultiSubmit(value, promptVariables)
         setMessages(currentMessages => [...currentMessages, responseMessage])
       }}
     >
@@ -98,19 +73,10 @@ export function PromptForm({
         <Tooltip>
           <TooltipTrigger asChild>
             <>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: 'none' }}
-              />
               <Button
                 variant="outline"
                 size="icon"
                 className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-                onClick={() => {
-                  fileInputRef.current.click(); // Trigger file input click
-                }}
               >
                 <IconPlus />
                 <span className="sr-only">New Chat</span>

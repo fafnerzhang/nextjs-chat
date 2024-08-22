@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { kv } from '@vercel/kv'
 
 import { auth } from '@/auth'
-import { type Chat } from '@/lib/types'
+import { type Chat, type Prompt, type PromptVariables } from '@/lib/types'
 
 export async function getChats(userId?: string | null) {
   const session = await auth()
@@ -169,4 +169,39 @@ export async function getMissingKeys() {
   return keysRequired
     .map(key => (process.env[key] ? '' : key))
     .filter(key => key !== '')
+}
+
+export async function savePromptForUser(prompt: Prompt) {
+  const session = await auth();
+
+  if (session && session.user && session.user.id) {
+    const userPromptKey = `user-prompt:${prompt.promptId}`; // Unique key for each user
+    const pipeline = kv.pipeline();
+    pipeline.hmset(userPromptKey, prompt);
+    pipeline.zadd(`user:prompt:${session.user.id}`, {
+      score: Date.now(),
+      member: `user-prompt:${prompt.promptId}`
+    })
+    await pipeline.exec();
+    return { success: true };
+  } else {
+    return { error: 'Unauthorized' };
+  }
+}
+
+export async function getPromptsForUser(): Promise<Prompt[]> {
+  const session = await auth();
+
+  if (session && session.user ) {
+    const userId = session.user.id;
+    const userPrompts: string[] = await kv.zrange(`user:prompt:${userId}`, 0, -1);
+    const pipeline = kv.pipeline();
+    for (const userPrompt of userPrompts) {
+      pipeline.hgetall(userPrompt);
+    }
+    const results = await pipeline.exec();
+    return results as Prompt[];
+  } else {
+    return [];
+  }
 }
