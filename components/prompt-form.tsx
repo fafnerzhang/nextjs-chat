@@ -6,7 +6,7 @@ import Textarea from 'react-textarea-autosize'
 import dynamic from 'next/dynamic'
 import { useActions, useUIState } from 'ai/rsc'
 
-import { UserMessage } from './stocks/message'
+import { UserMessage } from './message'
 import { type AI } from '@/lib/chat/actions'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
@@ -19,6 +19,7 @@ import { nanoid } from 'nanoid'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { usePromptVariable } from '@/components/ui/prompt-variable'
+import { useModel } from '@/lib/hooks/use-model'
 
 export function PromptForm({
   input,
@@ -33,6 +34,7 @@ export function PromptForm({
   const { submitUserMessage, streamMultiSubmit } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
   const { promptVariables, setPromptVariables } = usePromptVariable()
+  const { model, provider } = useModel()
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
@@ -65,7 +67,12 @@ export function PromptForm({
 
         // Submit and get response message
         console.log('promptVariables', promptVariables)
-        const responseMessage = await streamMultiSubmit(value, promptVariables)
+        const responseMessage = await streamMultiSubmit(
+          value,
+          promptVariables,
+          model,
+          provider
+        )
         setMessages(currentMessages => [...currentMessages, responseMessage])
       }}
     >

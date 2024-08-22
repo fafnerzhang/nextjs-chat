@@ -2,14 +2,15 @@
 
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
 import { cn } from '@/lib/utils'
-import { spinner } from '../ui/spinner'
-import { CodeBlock } from '../ui/codeblock'
-import { MemoizedReactMarkdown } from '../markdown'
+import { spinner } from './ui/spinner'
+import { CodeBlock } from './ui/codeblock'
+import { MemoizedReactMarkdown } from './markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { useStreamableText } from '@/lib/hooks/use-streamable-text'
-import { MultiPromptMessage } from '@/components/ui/message'
+import { Button } from './ui/button'
+import { IconDownload, IconCopy } from './ui/icons'
 // Different types of message bubbles.
 
 export function UserMessage({ children }: { children: React.ReactNode }) {
@@ -104,6 +105,53 @@ export function BotCard({
         <IconOpenAI />
       </div>
       <div className="ml-4 flex-1 pl-2">{children}</div>
+    </div>
+  )
+}
+interface ContentProps {
+  value: string
+}
+
+interface MultiSubmitMessageProps {
+  contents: ContentProps[]
+  className?: string
+  showAvatar?: boolean
+}
+
+export function MultiSubmitMessage({
+  contents,
+  className,
+  showAvatar = true
+}: MultiSubmitMessageProps) {
+  const contentLength = contents.length
+  return (
+    <div className="group relative flex items-start md:-ml-12">
+      <div
+        className={cn(
+          'flex size-[24px] shrink-0 select-none items-center justify-center rounded-md border bg-primary text-primary-foreground shadow-sm',
+          !showAvatar && 'invisible'
+        )}
+      >
+        <IconOpenAI />
+      </div>
+      <div className="ml-4 flex-1 pl-2">
+        {contents.map((content, index) => (
+          <MemoizedReactMarkdown
+            key={index}
+            className="prose prose-p:leading-relaxed prose-pre:p-0"
+          >
+            {content.value}
+          </MemoizedReactMarkdown>
+        ))}
+        <div className="flex items-center justify-start mt-1 rounded-sm">
+          <Button variant={'ghost'} className="rounded-lg	">
+            <IconDownload />
+          </Button>
+          <Button variant={'ghost'} className="rounded-lg	">
+            <IconCopy />
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

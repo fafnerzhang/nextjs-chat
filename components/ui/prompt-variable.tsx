@@ -7,10 +7,9 @@ interface PromptVariableContextType {
   promptVariables: PromptVariable
   prompts: Prompt[]
   selectedPromptId: string
-  setSelectedPromptId: (promptId: string) => void // Complete the function type
-  setPrompts: (
-    prompts: Prompt[] | ((prevPrompts: Prompt[]) => Prompt[])
-  ) => void // Accept a function for prevState
+  setSelectedPromptId: (promptId: string) => void
+  // Updated to match the useState pattern and correct return type
+  setPrompts: (prompts: Prompt[] | ((prevState: Prompt[]) => Prompt[])) => void
   setPromptVariables: (variable: PromptVariable) => void
 }
 
@@ -32,22 +31,31 @@ export function usePromptVariable() {
 interface PromptVariableProviderProps {
   children: React.ReactNode
 }
-
 export function PromptVariableProvider({
   children
 }: PromptVariableProviderProps) {
   const [promptVariables, setPromptVariable] = useState<PromptVariable>([])
-  const [prompts, setPrompts] = useState<Prompt[]>([])
-  const [selectedPromptId, setSelectedPromptId] = useState<string>('')
+  const [prompts, setPromptsRaw] = useState<Prompt[]>([])
+  const [selectedPromptId, setSelectedPromptIdRaw] = useState<string>('')
+
   const setPromptVariables = (variable: PromptVariable) => {
     setPromptVariable(variable)
   }
-  // const setPrompts = (prompts: Prompt[]): void => {
-  //   setPromptsRaw(prompts)
-  // }
-  // const setSelectedPromptId = (promptId: string) => {
-  //   setSelectedPromptIdRaw(promptId)
-  // }
+
+  // Corrected to match the expected type
+  const setPrompts = (
+    prompts: Prompt[] | ((prevState: Prompt[]) => Prompt[])
+  ): void => {
+    if (typeof prompts === 'function') {
+      setPromptsRaw(prevState => prompts(prevState))
+    } else {
+      setPromptsRaw(prompts)
+    }
+  }
+
+  const setSelectedPromptId = (promptId: string) => {
+    setSelectedPromptIdRaw(promptId)
+  }
 
   return (
     <PromptVariableContext.Provider

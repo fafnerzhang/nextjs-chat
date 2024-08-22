@@ -28,13 +28,21 @@ import {
   nanoid
 } from '@/lib/utils'
 import { saveChat } from '@/app/actions'
-import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
+import {
+  SpinnerMessage,
+  UserMessage,
+  MultiPromptMessage,
+  MultiSubmitMessage
+} from '@/components/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 import { streamingFetch, getModel } from '@/lib/utils'
-import { MultiPromptMessage } from '@/components/ui/message'
 import { replacePromptArgs } from '@/lib/utils'
 import { openai } from '@ai-sdk/openai'
+
+interface ResultItem {
+  value: string // Adjust the type of `value` as needed
+}
 
 async function streamMultiSubmit(
   prompt: string,
@@ -59,42 +67,28 @@ async function streamMultiSubmit(
   const multiSubmit = createStreamableUI(<SpinnerMessage />)
   runAsyncFnWithoutBlocking(async () => {
     let prompts = []
-    console.log(prompt)
-    console.log(JSON.stringify(variables))
     for (let i = 0; i < variables.length; i++) {
-      // let formattedString = prompt.replace(/\{(\w+)\}/g, (match, key) => {
-      //   // Check if the key exists in the current variables object, if not, return the original match
-      //   return variables[i].hasOwnProperty(key) ? variables[i][key] : match
-      // })
       let formattedString = replacePromptArgs(prompt, variables[i])
-      prompts.push(formattedString)
+      prompts.push({ body: formattedString, args: variables[i] })
     }
-    console.log(prompts)
+    console.log(`Prompts in action: ${prompts}`)
 
-    const it = streamingFetch('http://localhost:3000/api/chat')
+    const it = streamingFetch('http://localhost:3000/api/chat', {
+      body: JSON.stringify({
+        prompts: prompts,
+        model: model,
+        provider: provider
+      }),
+      method: 'POST'
+    })
     const result = []
     for await (let value of it) {
       console.log(value)
-      result.push(value)
-      multiSubmit.update(
-        <BotCard>
-          <div className="flex flex-col">
-            {result.map((item, index) => (
-              <p key={index}>{item}</p>
-            ))}
-          </div>
-        </BotCard>
-      )
+      const item = JSON.parse(value) as ResultItem
+      result.push(item)
+      multiSubmit.update(<MultiSubmitMessage contents={result} />)
     }
-    multiSubmit.done(
-      <BotCard>
-        <div className="flex flex-col">
-          {result.map((item, index) => (
-            <p key={index}>{item}</p>
-          ))}
-        </div>
-      </BotCard>
-    )
+    multiSubmit.done(<MultiSubmitMessage contents={result} />)
     const toolCallId = nanoid()
 
     aiState.done({
@@ -109,7 +103,8 @@ async function streamMultiSubmit(
               type: 'tool-result',
               toolName: 'multiSubmit',
               toolCallId,
-              result: result
+              result: result,
+              args: { prompt, variables, model, provider }
             }
           ]
         }
@@ -411,17 +406,12 @@ export const getUIStateFromAIState = (aiState: Chat) => {
       display:
         message.role === 'tool' ? (
           message.content.map(tool => {
-            return tool.toolName === 'multiSubmit' ? (
-              <BotCard>
-                {Array.isArray(tool.result) &&
-                  tool.result.map((item, index) => {
-                    return (
-                      <div key={index}>
-                        <div>{item}</div>
-                      </div>
-                    )
-                  })}
-              </BotCard>
+            return tool.toolName === 'multiSubmit' &&
+              Array.isArray(tool.result) ? (
+              <MultiSubmitMessage
+                key={tool.toolCallId}
+                contents={tool.result}
+              />
             ) : null
           })
         ) : message.role === 'user' ? (

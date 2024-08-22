@@ -130,15 +130,3 @@ export function SpinnerMessage() {
     </div>
   )
 }
-
-export function MultiPromptMessage(result: any[] | null) {
-  return (
-    <>
-      {result?.map((item, index) => (
-        <div key={index}>
-          <div>{item}</div>
-        </div>
-      ))}
-    </>
-  )
-}

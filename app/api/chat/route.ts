@@ -1,21 +1,29 @@
 import { NextRequest } from 'next/server';
 import { generateText } from 'ai'
-import {openai} from '@ai-sdk/openai'
+import { openai } from '@ai-sdk/openai'
+import { auth } from '@/auth'
+import {getModel} from '@/lib/utils'
 
-async function* fetchItems(): AsyncGenerator<Record<string, unknown>, void, unknown> {
+interface Prompt {
+  body: string,
+  args: Record<string, string>
+}
+
+async function* fetchItems(prompts: Prompt[], model: string, provider: string): AsyncGenerator<Record<string, unknown>, void, unknown> {
   const promises = [];
-  for (let i = 0; i < 1; ++i) {
+  const Model = getModel(provider, model)
+  for (let i = 0; i < prompts.length; ++i) {
       const promise = generateText({
-          model: openai('gpt-3.5-turbo'),
-          prompt: `Generate item ${i}`,
-      }).then((item) => ({ key: `item${i}`, value: item.text })) // Modify to return an object
+          model: Model,
+          prompt: prompts[i].body,
+      }).then((item) => ({key: i, value: item.text})) // Modify to return an object
         .catch((err) => {
             console.error(err);
+            console.error("Error in fetchItems");
             return { key: `item${i}`, value: "" }; // Return an object with a default value in case of error
         });
       promises.push(promise);
   }
-  console.log(promises.length)
   for (const promise of promises) {
       await new Promise(resolve => setTimeout(resolve, 100));
       yield await promise; // Yielding an object now
@@ -51,9 +59,16 @@ class StreamingResponse extends Response {
   }
 
 
-export async function GET(req: NextRequest ) {
-
-    const stream = makeStream( fetchItems() )
+export async function POST(req: NextRequest ) {
+  const session = await auth()
+    // if (!session) {
+    //     return new Response(null, { status: 401 })
+    // }
+    const res = await req.json()
+    const prompts: Prompt[] = res.prompts
+    const model = res.model
+    const provider = res.provider
+    const stream = makeStream( fetchItems(prompts, model, provider) )
     const response = new StreamingResponse( stream )
     return response
 }

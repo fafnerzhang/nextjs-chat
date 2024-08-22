@@ -4,7 +4,6 @@ import { SidebarItems } from '@/components/sidebar-items'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
-import * as Separator from '@radix-ui/react-separator'
 
 interface SidebarListProps {
   userId?: string
@@ -34,7 +33,6 @@ export async function SidebarList({ userId }: SidebarListProps) {
             </div>
           )}
         </div>
-        <Separator.Root className="bg-border bg-gray border-b border-border dark:bg-border dark:border-border" />
         <div className="flex items-center justify-between p-2"></div>
         <div className="flex items-center justify-between p-4">
           <ThemeToggle />

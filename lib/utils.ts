@@ -3,7 +3,8 @@ import { customAlphabet } from 'nanoid'
 import { twMerge } from 'tailwind-merge'
 import {openai} from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { google } from '@ai-sdk/google'
+import { google, createGoogleGenerativeAI } from '@ai-sdk/google'
+import { LanguageModel } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -36,14 +37,13 @@ export async function fetcher<JSON = any>(
   return res.json()
 }
 
-export async function* streamingFetch(input: RequestInfo, init?: RequestInit) {
+export async function* streamingFetch(input: RequestInfo, init?: RequestInit): AsyncGenerator<string> {
   const response = await fetch(input, init)
   if (!response.body) {
     throw new Error("Response body is null");
   }
   const reader = response.body.getReader()
   const decoder = new TextDecoder('utf-8')
-
   for (;;) {
     const { done, value } = await reader.read()
     if (done) break
@@ -111,14 +111,15 @@ export const getMessageFromCode = (resultCode: string) => {
   }
 }
 
-export function getModel(provider: string, model: string) {
+export function getModel(provider: string, model: string) : LanguageModel{
   switch (provider) {
     case 'openai':
       return openai(model)
     case 'anthropic':
-      return anthropic(model)
+      return anthropic(model) as LanguageModel
     case 'google':
-      return google(model)
+      
+      return google(model) as LanguageModel
     default:
       return openai(model)
   }

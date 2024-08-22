@@ -191,17 +191,38 @@ export async function savePromptForUser(prompt: Prompt) {
 
 export async function getPromptsForUser(): Promise<Prompt[]> {
   const session = await auth();
+  console.log('getPromptsForUser session', session);
+ if (!session || !session.user || !session.user.id) {
+  return []
+ }
 
-  if (session && session.user ) {
-    const userId = session.user.id;
-    const userPrompts: string[] = await kv.zrange(`user:prompt:${userId}`, 0, -1);
-    const pipeline = kv.pipeline();
-    for (const userPrompt of userPrompts) {
-      pipeline.hgetall(userPrompt);
-    }
-    const results = await pipeline.exec();
-    return results as Prompt[];
-  } else {
-    return [];
+ const userId = session.user.id;
+ const userPrompts: string[] = await kv.zrange(`user:prompt:${userId}`, 0, -1);
+ if (userPrompts.length === 0) {
+   // No prompts found for the user, return an empty array
+   return [];
+ }
+
+ const pipeline = kv.pipeline();
+ for (const userPrompt of userPrompts) {
+   pipeline.hgetall(userPrompt);
+ }
+ const results = await pipeline.exec();
+ if (!results) {
+   return [];
+ }
+ return results as Prompt[];
+
+}
+
+export async function removePrompt(promptId: string) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return { error: 'Unauthorized' };
   }
+  const userId = session.user.id;
+  const userPromptKey = `user-prompt:${promptId}`;
+  await kv.del(userPromptKey);
+  await kv.zrem(`user:prompt:${userId}`, userPromptKey);
+  return { success: true };
 }

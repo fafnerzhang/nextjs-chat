@@ -1,29 +1,12 @@
-import { CoreMessage, ProviderMetadata, CoreToolMessage, ToolContent } from 'ai'
+import { CoreMessage, CoreToolMessage, ToolContent } from 'ai'
 
 interface CustomToolResultPart {
   type: 'tool-result';
-  /**
-ID of the tool call that this result is associated with.
- */
   toolCallId: string;
-  /**
-Name of the tool that generated this result.
-  */
   toolName: string;
-  /**
-Result of the tool call. This is a JSON-serializable object.
-   */
   result: Object[] | unknown;
-  /**
-Optional flag if the result is an error or an error message.
-   */
   isError?: boolean;
-  /**
-Additional provider-specific metadata. They are passed through
-to the provider from the AI SDK and enable provider-specific
-functionality that can be fully encapsulated in the provider.
- */
-  experimental_providerMetadata?: ProviderMetadata;
+  args: Record<string, any>;
 }
 
 

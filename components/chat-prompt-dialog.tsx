@@ -19,7 +19,7 @@ import { cn, parsePromptArgs } from '@/lib/utils'
 import { usePromptVariable } from '@/components/ui/prompt-variable'
 import { set } from 'date-fns'
 import { nanoid } from '@/lib/utils'
-import { getPromptsForUser, savePromptForUser } from '@/app/actions'
+import { removePrompt, savePromptForUser } from '@/app/actions'
 
 interface ChatPromptDialogProps extends DialogProps {
   setInput: (value: string) => void
@@ -29,7 +29,6 @@ interface ChatPromptDialogProps extends DialogProps {
 export function ChatPromptDialog({
   setInput,
   children,
-  onOpenChange,
   ...props
 }: ChatPromptDialogProps) {
   const [edit, setEdit] = useState(false)
@@ -107,8 +106,17 @@ export function ChatPromptDialog({
                   <Button
                     className="m-2 w-28"
                     variant="destructive"
-                    onClick={() => {
-                      setEdit(!edit)
+                    onClick={async () => {
+                      await removePrompt(selectedPromptId)
+                      setPrompts(prevPrompts =>
+                        prevPrompts.filter(
+                          prompt => prompt.promptId !== selectedPromptId
+                        )
+                      )
+                      setEdit(prev => !prev)
+                      setSelectedPromptId('')
+                      setPromptTitle('')
+                      setPromptText('')
                     }}
                   >
                     Delete
@@ -120,13 +128,18 @@ export function ChatPromptDialog({
                   className="m-2 w-28"
                   variant="secondary"
                   onClick={() => {
-                    setEdit(!edit)
+                    setEdit(prev => !prev)
+                    props.onOpenChange(false)
+                    setSelectedPromptId('')
+                    setPromptTitle('')
+                    setPromptText('')
                   }}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="m-2 w-28"
+                  disabled={promptTitle.length === 0 || promptText.length === 0}
                   onClick={async () => {
                     setEdit(false)
                     const isNewPrompt = selectedPromptId.length === 0
@@ -183,7 +196,7 @@ export function ChatPromptDialog({
                 )
                 setInput(selectedPrompt?.prompt || '')
                 setSelectedPromptId('')
-                onOpenChange(false)
+                props.onOpenChange(false)
               }}
             >
               Use

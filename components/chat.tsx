@@ -22,12 +22,13 @@ import {
   IconUpload,
   IconBookmark
 } from '@/components/ui/icons'
-
+import { modelOptions } from '@/lib/constants'
 import { ChatPromptDialog } from './chat-prompt-dialog'
 import { PromptAccordion } from './accordion'
 import { Button } from './ui/button'
 import { usePromptVariable } from './ui/prompt-variable'
 import { getPromptsForUser } from '@/app/actions'
+import { useModel } from '@/lib/hooks/use-model'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
@@ -36,45 +37,13 @@ export interface ChatProps extends React.ComponentProps<'div'> {
   missingKeys: string[]
 }
 
-const modelOptions = [
-  {
-    value: 'gemini-1.5-flash',
-    provider: 'google',
-    display: (
-      <div className="flex items-center p-1">
-        <IconGemini />
-        <p className="p-1 text-muted-foreground">gemini-1.5-flash</p>
-      </div>
-    )
-  },
-  {
-    value: 'gpt-3.5-turbo',
-    provider: 'openai',
-    display: (
-      <div className="flex items-center p-1">
-        <IconOpenAI />
-        <p className="p-1 text-muted-foreground">gpt-3.5-turbo</p>
-      </div>
-    )
-  },
-  {
-    value: 'claude-1.5',
-    provider: 'anthropic',
-    display: (
-      <div className="flex items-center p-1">
-        <IconAnthropic />
-        <p className="p-1 text-muted-foreground">claude-1.5</p>
-      </div>
-    )
-  }
-]
 export function Chat({ id, className, session, missingKeys }: ChatProps) {
   const router = useRouter()
   const path = usePathname()
   const [input, setInput] = useState('')
   const [messages] = useUIState()
   const [aiState] = useAIState()
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash')
+  const { model, provider, setModel, setProvider } = useModel()
   const [promptDialogOpen, setPromptDialogOpen] = useState(false)
   const [_, setNewChatId] = useLocalStorage('newChatId', id)
   const { setPromptVariables, prompts, setPrompts } = usePromptVariable()
@@ -106,8 +75,15 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor()
+
   function onModelChange(model: string) {
-    setSelectedModel(model)
+    setModel(model)
+    const newProvider = modelOptions.find(
+      option => option.value === model
+    )?.provider
+    if (newProvider) {
+      setProvider(newProvider)
+    }
   }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -146,14 +122,11 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
       <div className="sticky top-0 flex w-full max-w-screen mx-auto bg-white z-50 bg-background dark:bg-zinc-900 overflow-auto">
         <div>
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger className=" hover:bg-white dark:bg-zinc-900 shadow-sm text-gray-700 focus:outline-none top-full">
-              {
-                modelOptions.find(option => option.value === selectedModel)
-                  ?.display
-              }
+            <DropdownMenu.Trigger className="hover:bg-white dark:bg-zinc-900 shadow-sm text-gray-700 focus:outline-none top-full">
+              {modelOptions.find(option => option.value === model)?.display}
             </DropdownMenu.Trigger>
             <DropdownMenu.Content
-              className="bg-white dark:bg-gray shadow-sm"
+              className="bg-white dark:bg-gray shadow-sm rounded-b-lg"
               align="start"
             >
               {modelOptions.map(option => (
@@ -164,7 +137,7 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
                 >
                   <div className="flex items-center">
                     {option.display}
-                    {selectedModel === option.value && (
+                    {model === option.value && (
                       <CheckIcon className="ml-auto size-5 text-gray-500" />
                     )}
                   </div>
