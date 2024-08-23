@@ -118,7 +118,6 @@ export function getModel(provider: string, model: string) : LanguageModel{
     case 'anthropic':
       return anthropic(model) as LanguageModel
     case 'google':
-      
       return google(model) as LanguageModel
     default:
       return openai(model)
@@ -126,19 +125,23 @@ export function getModel(provider: string, model: string) : LanguageModel{
 }
 
 export function parsePromptArgs(prompt: string): string[] {
-  const regex = /\{(\w+)\}/g; // Adjusted regex to match {var} pattern
+  const regex = /\{([\w\u4e00-\u9fff]+)\}/g; // Adjusted regex to match {var} pattern and include Chinese characters
   const matchesIterator = prompt.matchAll(regex);
   const matches = Array.from(matchesIterator); // Convert iterator to array directly
   const uniqueMatches = Array.from(new Set(matches.map(match => match[1])));
+  console.log('Unique matches:', uniqueMatches);
   return uniqueMatches;
 }
 
 export function replacePromptArgs(prompt: string, args: Record<string, string>): string {
-  return prompt.replace(/\{(\w+)\}/g, (_, key) => args[key] || `{${key}}`);
+  return prompt.replace(/\{([\w\u4e00-\u9fff]+)\}/g, (_, key) => args[key] || `{${key}}`);
 } 
 
 export function checkPromptArgs(prompt: string, args: Record<string, string>): boolean {
-  const regex = /\{(\w+)\}/g;
-  const matches = Array.from(prompt.matchAll(regex)); // Use Array.from to convert to array
-  return matches.every(match => args[match[1]] !== undefined);
+  if (prompt.includes('{}')){
+    return false;
+  }
+  const formattedKeys = Object.keys(args).map(key => `{${key}}`);
+  const allKeysExist = formattedKeys.every(key => prompt.includes(key));
+  return allKeysExist
 }

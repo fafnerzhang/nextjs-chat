@@ -31,7 +31,6 @@ import { saveChat } from '@/app/actions'
 import {
   SpinnerMessage,
   UserMessage,
-  MultiPromptMessage,
   MultiSubmitMessage
 } from '@/components/message'
 import { Chat, Message } from '@/lib/types'
@@ -39,10 +38,7 @@ import { auth } from '@/auth'
 import { streamingFetch, getModel } from '@/lib/utils'
 import { replacePromptArgs } from '@/lib/utils'
 import { openai } from '@ai-sdk/openai'
-
-interface ResultItem {
-  value: string // Adjust the type of `value` as needed
-}
+import { MultiSubmitContentProps } from '@/lib/types'
 
 async function streamMultiSubmit(
   prompt: string,
@@ -84,17 +80,31 @@ async function streamMultiSubmit(
     const result = []
     for await (let value of it) {
       console.log(value)
-      const item = JSON.parse(value) as ResultItem
+      const item = JSON.parse(value) as MultiSubmitContentProps
       result.push(item)
-      multiSubmit.update(<MultiSubmitMessage contents={result} />)
+      multiSubmit.update(
+        <MultiSubmitMessage contents={result} prompt={prompt} />
+      )
     }
-    multiSubmit.done(<MultiSubmitMessage contents={result} />)
+    multiSubmit.done(<MultiSubmitMessage contents={result} prompt={prompt} />)
     const toolCallId = nanoid()
 
     aiState.done({
       ...aiState.get(),
       messages: [
         ...aiState.get().messages,
+        {
+          id: nanoid(),
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool-call',
+              toolName: 'multiSubmit',
+              toolCallId,
+              args: { prompt, variables }
+            }
+          ]
+        },
         {
           id: nanoid(),
           role: 'tool',
@@ -104,7 +114,7 @@ async function streamMultiSubmit(
               toolName: 'multiSubmit',
               toolCallId,
               result: result,
-              args: { prompt, variables, model, provider }
+              prompt: prompt
             }
           ]
         }
@@ -118,81 +128,13 @@ async function streamMultiSubmit(
   }
 }
 
-async function confirmPurchase(symbol: string, price: number, amount: number) {
+async function submitUserMessage(
+  content: string,
+  model: string = 'gpt-3.5-turbo',
+  provider: string = 'openai'
+) {
   'use server'
-
   const aiState = getMutableAIState<typeof AI>()
-
-  const purchasing = createStreamableUI(
-    <div className="inline-flex items-start gap-1 md:items-center">
-      {spinner}
-      <p className="mb-2">
-        Purchasing {amount} ${symbol}...
-      </p>
-    </div>
-  )
-
-  const systemMessage = createStreamableUI(null)
-
-  runAsyncFnWithoutBlocking(async () => {
-    await sleep(1000)
-
-    purchasing.update(
-      <div className="inline-flex items-start gap-1 md:items-center">
-        {spinner}
-        <p className="mb-2">
-          Purchasing {amount} ${symbol}... working on it...
-        </p>
-      </div>
-    )
-
-    await sleep(1000)
-
-    purchasing.done(
-      <div>
-        <p className="mb-2">
-          You have successfully purchased {amount} ${symbol}. Total cost:{' '}
-          {formatNumber(amount * price)}
-        </p>
-      </div>
-    )
-
-    systemMessage.done(
-      <SystemMessage>
-        You have purchased {amount} shares of {symbol} at ${price}. Total cost ={' '}
-        {formatNumber(amount * price)}.
-      </SystemMessage>
-    )
-
-    aiState.done({
-      ...aiState.get(),
-      messages: [
-        ...aiState.get().messages,
-        {
-          id: nanoid(),
-          role: 'system',
-          content: `[User has purchased ${amount} shares of ${symbol} at ${price}. Total cost = ${
-            amount * price
-          }]`
-        }
-      ]
-    })
-  })
-
-  return {
-    purchasingUI: purchasing.value,
-    newMessage: {
-      id: nanoid(),
-      display: systemMessage.value
-    }
-  }
-}
-
-async function submitUserMessage(content: string) {
-  'use server'
-
-  const aiState = getMutableAIState<typeof AI>()
-
   aiState.update({
     ...aiState.get(),
     messages: [
@@ -207,25 +149,15 @@ async function submitUserMessage(content: string) {
 
   let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
   let textNode: undefined | React.ReactNode
-
+  const Model = getModel(provider, model)
   const result = await streamUI({
-    model: openai('gpt-3.5-turbo'),
+    model: Model,
     initial: <SpinnerMessage />,
     system: `\
-    You are a stock trading conversation bot and you can help users buy stocks, step by step.
-    You and the user can discuss stock prices and the user can adjust the amount of stocks they want to buy, or place an order, in the UI.
-    
-    Messages inside [] means that it's a UI element or a user event. For example:
-    - "[Price of AAPL = 100]" means that an interface of the stock price of AAPL is shown to the user.
-    - "[User has changed the amount of AAPL to 10]" means that the user has changed the amount of AAPL to 10 in the UI.
-    
-    If the user requests purchasing a stock, call \`show_stock_purchase_ui\` to show the purchase UI.
-    If the user just wants the price, call \`show_stock_price\` to show the price.
-    If you want to show trending stocks, call \`list_stocks\`.
-    If you want to show events, call \`get_events\`.
-    If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
-    
-    Besides that, you can also chat with users and do some calculations if needed.`,
+    You are an expert marketing assistant, skilled in crafting concise and impactful marketing content.
+    Your task is to help marketing professionals create short, engaging, and persuasive copy that resonates with their target audience.
+    Focus on clear messaging, strong calls to action, and emotional appeal, while maintaining brand voice and consistency.
+    there is no available tool for this task.`,
     messages: [
       ...aiState.get().messages.map((message: any) => ({
         role: message.role,
@@ -255,71 +187,7 @@ async function submitUserMessage(content: string) {
       } else {
         textStream.update(delta)
       }
-
       return textNode
-    },
-
-    tools: {
-      listStocks: {
-        description: 'List three imaginary stocks that are trending.',
-        parameters: z.object({
-          stocks: z.array(
-            z.object({
-              symbol: z.string().describe('The symbol of the stock'),
-              price: z.number().describe('The price of the stock'),
-              delta: z.number().describe('The change in price of the stock')
-            })
-          )
-        }),
-        generate: async function* ({ stocks }) {
-          yield (
-            <BotCard>
-              <StocksSkeleton />
-            </BotCard>
-          )
-
-          await sleep(1000)
-
-          const toolCallId = nanoid()
-
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'assistant',
-                content: [
-                  {
-                    type: 'tool-call',
-                    toolName: 'listStocks',
-                    toolCallId,
-                    args: { stocks }
-                  }
-                ]
-              },
-              {
-                id: nanoid(),
-                role: 'tool',
-                content: [
-                  {
-                    type: 'tool-result',
-                    toolName: 'listStocks',
-                    toolCallId,
-                    result: stocks
-                  }
-                ]
-              }
-            ]
-          })
-
-          return (
-            <BotCard>
-              <Stocks props={stocks} />
-            </BotCard>
-          )
-        }
-      }
     }
   })
 
@@ -342,7 +210,6 @@ export type UIState = {
 export const AI = createAI<AIState, UIState>({
   actions: {
     submitUserMessage,
-    confirmPurchase,
     streamMultiSubmit
   },
   initialUIState: [],
@@ -407,10 +274,12 @@ export const getUIStateFromAIState = (aiState: Chat) => {
         message.role === 'tool' ? (
           message.content.map(tool => {
             return tool.toolName === 'multiSubmit' &&
-              Array.isArray(tool.result) ? (
+              Array.isArray(tool.result) &&
+              'prompt' in tool ? (
               <MultiSubmitMessage
                 key={tool.toolCallId}
                 contents={tool.result}
+                prompt={tool.prompt}
               />
             ) : null
           })

@@ -191,7 +191,6 @@ export async function savePromptForUser(prompt: Prompt) {
 
 export async function getPromptsForUser(): Promise<Prompt[]> {
   const session = await auth();
-  console.log('getPromptsForUser session', session);
  if (!session || !session.user || !session.user.id) {
   return []
  }
@@ -212,7 +211,6 @@ export async function getPromptsForUser(): Promise<Prompt[]> {
    return [];
  }
  return results as Prompt[];
-
 }
 
 export async function removePrompt(promptId: string) {

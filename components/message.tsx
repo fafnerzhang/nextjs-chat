@@ -10,8 +10,9 @@ import remarkMath from 'remark-math'
 import { StreamableValue, useStreamableValue } from 'ai/rsc'
 import { useStreamableText } from '@/lib/hooks/use-streamable-text'
 import { Button } from './ui/button'
-import { IconDownload, IconCopy } from './ui/icons'
-// Different types of message bubbles.
+import { IconDownload, IconCopy, IconCheck } from './ui/icons'
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
+import { MultiSubmitContentProps } from '@/lib/types'
 
 export function UserMessage({ children }: { children: React.ReactNode }) {
   return (
@@ -34,7 +35,6 @@ export function BotMessage({
   className?: string
 }) {
   const text = useStreamableText(content)
-
   return (
     <div className={cn('group relative flex items-start md:-ml-12', className)}>
       <div className="flex size-[24px] shrink-0 select-none items-center justify-center rounded-md border bg-primary text-primary-foreground shadow-sm">
@@ -108,47 +108,90 @@ export function BotCard({
     </div>
   )
 }
-interface ContentProps {
-  value: string
-}
 
 interface MultiSubmitMessageProps {
-  contents: ContentProps[]
+  contents: MultiSubmitContentProps[]
   className?: string
   showAvatar?: boolean
+  prompt?: string
 }
 
 export function MultiSubmitMessage({
   contents,
   className,
-  showAvatar = true
+  showAvatar = true,
+  prompt,
+  ...props
 }: MultiSubmitMessageProps) {
   const contentLength = contents.length
+  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
+  const onCopy = () => {
+    if (isCopied) return
+    copyToClipboard(contents.map(c => c.value).join('\n'))
+  }
+
+  const downloadFile = async () => {
+    try {
+      const response = await fetch('/api/xlsx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt, contents })
+        // Include body if needed, e.g., body: JSON.stringify({ key: 'value' })
+      })
+      if (!response.ok) throw new Error('Network response was not ok')
+      const blob = await response.blob()
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'downloaded_file.xlsx' // Default filename
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/)
+        if (match && match[1]) {
+          filename = match[1]
+        }
+      }
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a) // Append the link to the document
+      a.click()
+      window.URL.revokeObjectURL(url) // Clean up
+      a.remove() // Remove the link
+    } catch (error) {
+      console.error('Download failed:', error)
+    }
+  }
+
   return (
-    <div className="group relative flex items-start md:-ml-12">
-      <div
-        className={cn(
-          'flex size-[24px] shrink-0 select-none items-center justify-center rounded-md border bg-primary text-primary-foreground shadow-sm',
-          !showAvatar && 'invisible'
-        )}
-      >
+    <div className={cn('group relative flex items-start md:-ml-12', className)}>
+      <div className="flex size-[24px] shrink-0 select-none items-center justify-center rounded-md border bg-primary text-primary-foreground shadow-sm">
         <IconOpenAI />
       </div>
       <div className="ml-4 flex-1 pl-2">
         {contents.map((content, index) => (
-          <MemoizedReactMarkdown
-            key={index}
-            className="prose prose-p:leading-relaxed prose-pre:p-0"
-          >
-            {content.value}
-          </MemoizedReactMarkdown>
+          <>
+            <MemoizedReactMarkdown
+              key={index}
+              className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0"
+            >
+              {content.value}
+            </MemoizedReactMarkdown>
+            {index !== contentLength - 1 && (
+              <hr className="my-2 border-gray-200 dark:prose-invert prose-p:leading-relaxed prose-pre:p-0" />
+            )}
+          </>
         ))}
         <div className="flex items-center justify-start mt-1 rounded-sm">
-          <Button variant={'ghost'} className="rounded-lg	">
+          <Button
+            variant={'ghost'}
+            className="rounded-lg	"
+            onClick={downloadFile}
+          >
             <IconDownload />
           </Button>
-          <Button variant={'ghost'} className="rounded-lg	">
-            <IconCopy />
+          <Button variant={'ghost'} className="rounded-lg" onClick={onCopy}>
+            {isCopied ? <IconCheck /> : <IconCopy />}
           </Button>
         </div>
       </div>

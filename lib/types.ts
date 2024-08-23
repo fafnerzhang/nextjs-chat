@@ -1,12 +1,18 @@
 import { CoreMessage, CoreToolMessage, ToolContent } from 'ai'
 
+// Here we define the Custom Tool Result for MultiSubmitMessage
+export interface MultiSubmitContentProps {
+  value: string
+  args: Record<string, any>
+}
+
 interface CustomToolResultPart {
   type: 'tool-result';
   toolCallId: string;
   toolName: string;
-  result: Object[] | unknown;
+  result: MultiSubmitContentProps[] | unknown;
   isError?: boolean;
-  args: Record<string, any>;
+  prompt?: string;
 }
 
 
@@ -20,6 +26,7 @@ interface CustomCoreToolMessage extends CoreToolMessage {
 type MessageWithId = CoreMessage & {
   id: string
 }
+
 export type Message  =  CustomCoreToolMessage | MessageWithId
 
 export interface Chat extends Record<string, any> {

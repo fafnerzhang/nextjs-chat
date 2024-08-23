@@ -84,7 +84,7 @@ interface PromptAccordionProps {
 }
 
 export function PromptAccordion({ prompts = [] }: PromptAccordionProps) {
-  const { setSelectedPromptId } = usePromptVariable()
+  const { selectedPromptId, setSelectedPromptId } = usePromptVariable()
   return (
     <Accordion.Root
       className="bg-mauve6 w-[700px] rounded-md black:bg-black"
@@ -93,20 +93,28 @@ export function PromptAccordion({ prompts = [] }: PromptAccordionProps) {
       collapsible
     >
       {prompts.map((prompt, index) => (
-        <AccordionItem key={prompt.promptId} value={prompt.promptId}>
-          <AccordionTrigger>
-            <div className="flex">
+        <AccordionItem
+          key={prompt.promptId}
+          value={prompt.promptId}
+          className={`dark:bg-background`}
+        >
+          <AccordionTrigger className="dark:bg-background">
+            <div className="flex dark:bg-background">
               {prompt.title}
-              <div className="grow w-96"></div>
-              {prompt.args.length > 0 &&
-                prompt.args.map((arg, index) => (
-                  <Badge key={index} className="ml-1">
-                    {arg}
-                  </Badge>
-                ))}
+              <div className="grow w-80"></div>
+              <div className="flex max-w-52 overflow-scroll no-scrollbar text-primary-foreground dark:bg-background">
+                {prompt.args.length > 0 &&
+                  prompt.args.map((arg, index) => (
+                    <Badge key={index} className="ml-1 text-secondary">
+                      {arg}
+                    </Badge>
+                  ))}
+              </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent>{prompt.prompt}</AccordionContent>
+          <AccordionContent className="text-primary-background dark:bg-background">
+            {prompt.prompt}
+          </AccordionContent>
         </AccordionItem>
       ))}
     </Accordion.Root>

@@ -1,14 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { useRef } from 'react'
 import Textarea from 'react-textarea-autosize'
-import dynamic from 'next/dynamic'
 import { useActions, useUIState } from 'ai/rsc'
-
 import { UserMessage } from './message'
 import { type AI } from '@/lib/chat/actions'
-import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
+import {
+  IconNetwork,
+  IconPlus,
+  IconPencil,
+  IconArrowElbow
+} from '@/components/ui/icons'
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +22,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { usePromptVariable } from '@/components/ui/prompt-variable'
 import { useModel } from '@/lib/hooks/use-model'
+import { checkPromptArgs } from '@/lib/utils'
 
 export function PromptForm({
   input,
@@ -35,27 +38,24 @@ export function PromptForm({
   const [_, setMessages] = useUIState<typeof AI>()
   const { promptVariables, setPromptVariables } = usePromptVariable()
   const { model, provider } = useModel()
+  const [agentType, setAgentType] = React.useState('multiSubmit')
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
-
   return (
     <form
       ref={formRef}
       onSubmit={async (e: any) => {
         e.preventDefault()
-
         // Blur focus on mobile
         if (window.innerWidth < 600) {
           e.target['message']?.blur()
         }
-
         const value = input.trim()
         setInput('')
         if (!value) return
-
         // Optimistically add user message UI
         setMessages(currentMessages => [
           ...currentMessages,
@@ -66,32 +66,44 @@ export function PromptForm({
         ])
 
         // Submit and get response message
-        console.log('promptVariables', promptVariables)
-        const responseMessage = await streamMultiSubmit(
-          value,
-          promptVariables,
-          model,
-          provider
-        )
+        let responseMessage = null
+        if (agentType === 'multiSubmit') {
+          responseMessage = await streamMultiSubmit(
+            value,
+            promptVariables,
+            model,
+            provider
+          )
+        }
+        if (agentType === 'submitUserMessage') {
+          responseMessage = await submitUserMessage(value, model, provider)
+        }
         setMessages(currentMessages => [...currentMessages, responseMessage])
       }}
     >
-      <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              >
-                <IconPlus />
-                <span className="sr-only">New Chat</span>
-              </Button>
-            </>
-          </TooltipTrigger>
-          <TooltipContent>New Chat</TooltipContent>
-        </Tooltip>
+      <div className="relative flex max-h-80 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
+        <Button
+          variant="outline"
+          size="icon"
+          type="button"
+          className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+          onClick={() => {
+            if (agentType === 'multiSubmit') {
+              setAgentType('submitUserMessage')
+            } else {
+              setAgentType('multiSubmit')
+            }
+          }}
+        >
+          {agentType === 'submitUserMessage' ? (
+            <IconPencil />
+          ) : agentType === 'multiSubmit' ? (
+            <IconNetwork />
+          ) : (
+            <IconPlus />
+          )}
+        </Button>
+
         <Textarea
           ref={inputRef}
           tabIndex={0}
@@ -106,11 +118,23 @@ export function PromptForm({
           rows={1}
           value={input}
           onChange={e => setInput(e.target.value)}
+          maxLength={1500}
         />
         <div className="absolute right-0 top-[13px] sm:right-4">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button type="submit" size="icon" disabled={input === ''}>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={
+                  (input === '' && agentType === 'submitUserMessage') ||
+                  (agentType === 'multiSubmit' &&
+                    !(
+                      promptVariables.length > 0 &&
+                      checkPromptArgs(input, promptVariables[0])
+                    ))
+                }
+              >
                 <IconArrowElbow />
                 <span className="sr-only">Send message</span>
               </Button>

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext } from 'react'
 import { Prompt } from '@/lib/types'
 // Step 1: Create the Context
-type PromptVariable = Array<object>
+type PromptVariable = Array<Record<string, string>>
 
 interface PromptVariableContextType {
   promptVariables: PromptVariable

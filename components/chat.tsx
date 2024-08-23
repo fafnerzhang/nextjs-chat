@@ -24,8 +24,6 @@ import {
 } from '@/components/ui/icons'
 import { modelOptions } from '@/lib/constants'
 import { ChatPromptDialog } from './chat-prompt-dialog'
-import { PromptAccordion } from './accordion'
-import { Button } from './ui/button'
 import { usePromptVariable } from './ui/prompt-variable'
 import { getPromptsForUser } from '@/app/actions'
 import { useModel } from '@/lib/hooks/use-model'
@@ -123,7 +121,9 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
         <div>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger className="hover:bg-white dark:bg-zinc-900 shadow-sm text-gray-700 focus:outline-none top-full">
-              {modelOptions.find(option => option.value === model)?.display}
+              <div className="flex items-center w-full dark:bg-background cursor-pointer">
+                {modelOptions.find(option => option.value === model)?.display}
+              </div>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content
               className="bg-white dark:bg-gray shadow-sm rounded-b-lg"
@@ -132,10 +132,10 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
               {modelOptions.map(option => (
                 <DropdownMenu.Item
                   key={option.value}
-                  className="flex items-center dark:bg-gray hover:bg-gray-100 hover:outline-none cursor-pointer"
+                  className="flex items-center dark:bg-gray w-full hover:bg-gray-100 hover:outline-none cursor-pointer"
                   onSelect={() => onModelChange(option.value)}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center w-full dark:bg-background">
                     {option.display}
                     {model === option.value && (
                       <CheckIcon className="ml-auto size-5 text-gray-500" />

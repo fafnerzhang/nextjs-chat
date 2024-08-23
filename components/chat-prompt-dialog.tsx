@@ -129,7 +129,6 @@ export function ChatPromptDialog({
                   variant="secondary"
                   onClick={() => {
                     setEdit(prev => !prev)
-                    props.onOpenChange(false)
                     setSelectedPromptId('')
                     setPromptTitle('')
                     setPromptText('')

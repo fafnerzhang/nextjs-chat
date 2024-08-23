@@ -16,7 +16,7 @@ async function* fetchItems(prompts: Prompt[], model: string, provider: string): 
       const promise = generateText({
           model: Model,
           prompt: prompts[i].body,
-      }).then((item) => ({key: i, value: item.text})) // Modify to return an object
+      }).then((item) => ({key: i, value: item.text, args: prompts[i].args})) // Modify to return an object
         .catch((err) => {
             console.error(err);
             console.error("Error in fetchItems");
