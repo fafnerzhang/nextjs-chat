@@ -2,14 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { kv } from '@vercel/kv'
-
+// import { kv } from '@vercel/kv'
+import {Message} from '@/lib/types'
 import { auth } from '@/auth'
-import { type Chat } from '@/lib/types'
+import { type Chat, type Prompt, type PromptVariables } from '@/lib/types'
+import Redis from 'ioredis'
+
+const kv = new Redis({host: process.env.REDIS_HOST, port: process.env.REDIS_PORT})
+
 
 export async function getChats(userId?: string | null) {
   const session = await auth()
-
+  console.log(`userId`, userId)
   if (!userId) {
     return []
   }
@@ -21,19 +25,22 @@ export async function getChats(userId?: string | null) {
   }
 
   try {
-    const pipeline = kv.pipeline()
-    const chats: string[] = await kv.zrange(`user:chat:${userId}`, 0, -1, {
-      rev: true
-    })
-
-    for (const chat of chats) {
-      pipeline.hgetall(chat)
-    }
+    const pipeline = kv.pipeline();
+    const chats: string[] = await kv.zrevrange(`user:chat:${userId}`, 0, -1);
+    chats.forEach(chat => pipeline.hgetall(chat));
 
     const results = await pipeline.exec()
-
-    return results as Chat[]
+    if (!results) {
+      return []
+    }
+    const chatsResult: Chat[] = results.map((result) => {
+      const chat: Chat = result as any;
+      chat.messages = JSON.parse(chat[1].messages) as Message[]
+      return chat[1]
+    })
+    return chatsResult as Chat[]
   } catch (error) {
+    console.log(`error`, error)
     return []
   }
 }
@@ -47,13 +54,13 @@ export async function getChat(id: string, userId: string) {
     }
   }
 
-  const chat = await kv.hgetall<Chat>(`chat:${id}`)
+  let chat = await kv.hgetall(`chat:${id}`)
 
   if (!chat || (userId && chat.userId !== userId)) {
     return null
   }
-
-  return chat
+  const res = {...chat, messages: JSON.parse(chat.messages) as Message[]}
+  return res
 }
 
 export async function removeChat({ id, path }: { id: string; path: string }) {
@@ -108,7 +115,7 @@ export async function clearChats() {
 }
 
 export async function getSharedChat(id: string) {
-  const chat = await kv.hgetall<Chat>(`chat:${id}`)
+  const chat = await kv.hgetall(`chat:${id}`)
 
   if (!chat || !chat.sharePath) {
     return null
@@ -126,7 +133,7 @@ export async function shareChat(id: string) {
     }
   }
 
-  const chat = await kv.hgetall<Chat>(`chat:${id}`)
+  const chat = await kv.hgetall(`chat:${id}`)
 
   if (!chat || chat.userId !== session.user.id) {
     return {
@@ -149,12 +156,11 @@ export async function saveChat(chat: Chat) {
 
   if (session && session.user) {
     const pipeline = kv.pipeline()
-    pipeline.hmset(`chat:${chat.id}`, chat)
-    pipeline.zadd(`user:chat:${chat.userId}`, {
-      score: Date.now(),
-      member: `chat:${chat.id}`
-    })
-    await pipeline.exec()
+    const redisChat = {...chat, messages: JSON.stringify(chat.messages)}
+    pipeline.hmset(`chat:${chat.id}`, redisChat)
+    pipeline.zadd(`user:chat:${chat.userId}`, Date.now().toString(), `chat:${chat.id}`)
+    console.log(`saved chatID ${chat.id}`)
+    const res = await pipeline.exec()
   } else {
     return
   }
@@ -169,4 +175,69 @@ export async function getMissingKeys() {
   return keysRequired
     .map(key => (process.env[key] ? '' : key))
     .filter(key => key !== '')
+}
+
+export async function savePromptForUser(prompt: Prompt) {
+  const session = await auth();
+
+  if (session && session.user && session.user.id) {
+    const userPromptKey = `user-prompt:${prompt.promptId}`; // Unique key for each user
+    const pipeline = kv.pipeline();
+    const promptRedis = {...prompt, args: JSON.stringify(prompt.args)};
+    pipeline.hmset(userPromptKey, promptRedis);
+    pipeline.zadd(`user:prompt:${session.user.id}`, Date.now().toString(),
+      `user-prompt:${prompt.promptId}`
+   )
+    await pipeline.exec();
+    return { success: true };
+  } else {
+    return { error: 'Unauthorized' };
+  }
+}
+
+export async function getPromptsForUser(): Promise<Prompt[]> {
+  const session = await auth();
+ if (!session || !session.user || !session.user.id) {
+  return []
+ }
+
+ const userId = session.user.id;
+ const userPrompts: string[] = await kv.zrange(`user:prompt:${userId}`, 0, -1);
+ if (userPrompts.length === 0) {
+   // No prompts found for the user, return an empty array
+   return [];
+ }
+
+ const pipeline = kv.pipeline();
+ for (const userPrompt of userPrompts) {
+   pipeline.hgetall(userPrompt);
+ }
+ const results = await pipeline.exec();
+ if (!results) {
+   return [];
+ }
+const prompts = results.map((result) => {
+  // Check if result is truthy and if its second element is an object
+  if (!result || typeof result[1] !== 'object') {
+    return null;
+  }
+  // Convert the result to a prompt object
+  const res = result[1] as any
+  let prompt = { ...res, args: res.args } as Prompt;
+  return prompt;
+});
+  console.log(`prompts`, prompts)
+ return prompts as Prompt[];
+}
+
+export async function removePrompt(promptId: string) {
+  const session = await auth();
+  if (!session || !session.user || !session.user.id) {
+    return { error: 'Unauthorized' };
+  }
+  const userId = session.user.id;
+  const userPromptKey = `user-prompt:${promptId}`;
+  await kv.del(userPromptKey);
+  await kv.zrem(`user:prompt:${userId}`, userPromptKey);
+  return { success: true };
 }

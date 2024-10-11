@@ -1,3 +1,4 @@
+'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 export const useScrollAnchor = () => {
@@ -63,7 +64,7 @@ export const useScrollAnchor = () => {
           })
         },
         {
-          rootMargin: '0px 0px -150px 0px'
+          rootMargin: '0px 0px -130px 0px'
         }
       )
 

@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import { mauve, violet } from '@radix-ui/colors'
+
 module.exports = {
   darkMode: ['class'],
   content: [
@@ -17,6 +19,20 @@ module.exports = {
       }
     },
     extend: {
+      scrollbarHide: {
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+        /* Hide scrollbar for IE, Edge, and Firefox */
+        '-ms-overflow-style': 'none',  /* IE and Edge */
+        'scrollbar-width': 'none',  /* Firefox */
+      },
+      maxHeight: {
+        '128': '32rem',
+        '144': '36rem',
+        '160': '40rem'
+      },
       fontFamily: {
         sans: ['var(--font-geist-sans)'],
         mono: ['var(--font-geist-mono)']
@@ -54,7 +70,9 @@ module.exports = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
-        }
+        },
+        ...mauve,
+        ...violet,
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -69,11 +87,21 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
-        }
+        },
+        slideDown: {
+          from: { height: '0px' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        slideUp: {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0px' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        slideDown: 'slideDown 300ms cubic-bezier(0.87, 0, 0.13, 1)',
+        slideUp: 'slideUp 300ms cubic-bezier(0.87, 0, 0.13, 1)',
       }
     }
   },

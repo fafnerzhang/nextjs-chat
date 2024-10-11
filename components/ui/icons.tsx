@@ -4,6 +4,59 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+function IconAlignLeft({
+  className,
+  inverted,
+  ...props
+}: React.ComponentProps<'svg'> & { inverted?: boolean }) {
+  const id = React.useId()
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="40"
+        y1="40"
+        x2="40"
+        y2="216"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="72"
+        y="56"
+        width="112"
+        height="56"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="72"
+        y="144"
+        width="152"
+        height="56"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
 function IconNextChat({
   className,
   inverted,
@@ -156,6 +209,103 @@ function IconSeparator({ className, ...props }: React.ComponentProps<'svg'>) {
   )
 }
 
+function IconBookmark({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-6', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="112"
+        y1="112"
+        x2="176"
+        y2="112"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="112"
+        y1="144"
+        x2="176"
+        y2="144"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="40"
+        y="40"
+        width="176"
+        height="176"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="80"
+        y1="40"
+        x2="80"
+        y2="216"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
+function IconUpload({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-6', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="128"
+        y1="144"
+        x2="128"
+        y2="32"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <polyline
+        points="216 144 216 208 40 208 40 144"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <polyline
+        points="88 72 128 32 168 72"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
 function IconArrowDown({ className, ...props }: React.ComponentProps<'svg'>) {
   return (
     <svg
@@ -166,6 +316,67 @@ function IconArrowDown({ className, ...props }: React.ComponentProps<'svg'>) {
       {...props}
     >
       <path d="m205.66 149.66-72 72a8 8 0 0 1-11.32 0l-72-72a8 8 0 0 1 11.32-11.32L120 196.69V40a8 8 0 0 1 16 0v156.69l58.34-58.35a8 8 0 0 1 11.32 11.32Z" />
+    </svg>
+  )
+}
+
+function IconClockwise({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <polyline
+        points="184 104 232 104 232 56"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <path
+        d="M188.4,192a88,88,0,1,1,1.83-126.23L232,104"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
+function IconArrowUp({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="128"
+        y1="216"
+        x2="128"
+        y2="40"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <polyline
+        points="56 112 128 40 200 112"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
     </svg>
   )
 }
@@ -208,6 +419,139 @@ function IconPlus({ className, ...props }: React.ComponentProps<'svg'>) {
       {...props}
     >
       <path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z" />
+    </svg>
+  )
+}
+
+function IconPencil({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <polygon
+        points="128 160 96 160 96 128 192 32 224 64 128 160"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="168"
+        y1="56"
+        x2="200"
+        y2="88"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <path
+        d="M216,128v80a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h80"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
+function IconNetwork({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <rect
+        x="104"
+        y="32"
+        width="48"
+        height="48"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="40"
+        y="168"
+        width="48"
+        height="48"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="168"
+        y="168"
+        width="48"
+        height="48"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="128"
+        y1="80"
+        x2="128"
+        y2="120"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="192"
+        y1="120"
+        x2="192"
+        y2="168"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="64"
+        y1="168"
+        x2="64"
+        y2="120"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <line
+        x1="24"
+        y1="120"
+        x2="232"
+        y2="120"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
     </svg>
   )
 }
@@ -320,6 +664,56 @@ function IconMoon({ className, ...props }: React.ComponentProps<'svg'>) {
       {...props}
     >
       <path d="M233.54 142.23a8 8 0 0 0-8-2 88.08 88.08 0 0 1-109.8-109.8 8 8 0 0 0-10-10 104.84 104.84 0 0 0-52.91 37A104 104 0 0 0 136 224a103.09 103.09 0 0 0 62.52-20.88 104.84 104.84 0 0 0 37-52.91 8 8 0 0 0-1.98-7.98Zm-44.64 48.11A88 88 0 0 1 65.66 67.11a89 89 0 0 1 31.4-26A106 106 0 0 0 96 56a104.11 104.11 0 0 0 104 104 106 106 0 0 0 14.92-1.06 89 89 0 0 1-26.02 31.4Z" />
+    </svg>
+  )
+}
+
+function IconAnthropic({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      data-testid="geist-icon"
+      height="16"
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width="16"
+      className={cn('size-4', className)}
+    >
+      <g transform="translate(0,2)">
+        <path
+          d="M11.375 0h-2.411L13.352 11.13h2.411L11.375 0ZM4.4 0 0 11.13h2.46l0.9-2.336h4.604l0.9 2.336h2.46L6.924 0H4.4Zm-0.244 6.723 1.506-3.909 1.506 3.909H4.156Z"
+          fill="currentColor"
+        ></path>
+      </g>
+    </svg>
+  )
+}
+
+function IconGemini({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      data-testid="geist-icon"
+      height="16"
+      strokeLinejoin="round"
+      viewBox="0 0 16 16"
+      width="16"
+      className={cn('size-4', className)}
+    >
+      <path
+        d="M8.15991 6.54543V9.64362H12.4654C12.2763 10.64 11.709 11.4837 10.8581 12.0509L13.4544 14.0655C14.9671 12.6692 15.8399 10.6182 15.8399 8.18188C15.8399 7.61461 15.789 7.06911 15.6944 6.54552L8.15991 6.54543Z"
+        fill="#4285F4"
+      ></path>
+      <path
+        d="M3.6764 9.52268L3.09083 9.97093L1.01807 11.5855C2.33443 14.1963 5.03241 16 8.15966 16C10.3196 16 12.1305 15.2873 13.4542 14.0655L10.8578 12.0509C10.1451 12.5309 9.23598 12.8219 8.15966 12.8219C6.07967 12.8219 4.31245 11.4182 3.67967 9.5273L3.6764 9.52268Z"
+        fill="#34A853"
+      ></path>
+      <path
+        d="M1.01803 4.41455C0.472607 5.49087 0.159912 6.70543 0.159912 7.99995C0.159912 9.29447 0.472607 10.509 1.01803 11.5854C1.01803 11.5926 3.6799 9.51991 3.6799 9.51991C3.5199 9.03991 3.42532 8.53085 3.42532 7.99987C3.42532 7.46889 3.5199 6.95983 3.6799 6.47983L1.01803 4.41455Z"
+        fill="#FBBC05"
+      ></path>
+      <path
+        d="M8.15982 3.18545C9.33802 3.18545 10.3853 3.59271 11.2216 4.37818L13.5125 2.0873C12.1234 0.792777 10.3199 0 8.15982 0C5.03257 0 2.33443 1.79636 1.01807 4.41455L3.67985 6.48001C4.31254 4.58908 6.07983 3.18545 8.15982 3.18545Z"
+        fill="#EA4335"
+      ></path>
     </svg>
   )
 }
@@ -476,6 +870,22 @@ function IconChevronUpDown({
   )
 }
 
+function IconPrompt({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="#000000"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <path d="M213.66,66.34l-40-40A8,8,0,0,0,168,24H88A16,16,0,0,0,72,40V56H56A16,16,0,0,0,40,72V216a16,16,0,0,0,16,16H168a16,16,0,0,0,16-16V200h16a16,16,0,0,0,16-16V72A8,8,0,0,0,213.66,66.34ZM168,216H56V72h76.69L168,107.31v84.53c0,.06,0,.11,0,.16s0,.1,0,.16V216Zm32-32H184V104a8,8,0,0,0-2.34-5.66l-40-40A8,8,0,0,0,136,56H88V40h76.69L200,75.31Zm-56-32a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h48A8,8,0,0,1,144,152Zm0,32a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h48A8,8,0,0,1,144,184Z"></path>
+    </svg>
+  )
+}
+
 export {
   IconEdit,
   IconNextChat,
@@ -485,8 +895,11 @@ export {
   IconSeparator,
   IconArrowDown,
   IconArrowRight,
+  IconArrowUp,
   IconUser,
   IconPlus,
+  IconNetwork,
+  IconPencil,
   IconArrowElbow,
   IconSpinner,
   IconMessage,
@@ -502,6 +915,13 @@ export {
   IconClose,
   IconShare,
   IconUsers,
+  IconUpload,
   IconExternalLink,
-  IconChevronUpDown
+  IconChevronUpDown,
+  IconGemini,
+  IconAnthropic,
+  IconPrompt,
+  IconBookmark,
+  IconClockwise,
+  IconAlignLeft
 }

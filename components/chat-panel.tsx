@@ -1,5 +1,5 @@
 import * as React from 'react'
-
+import { ReactElement, useState } from 'react'
 import { shareChat } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { PromptForm } from '@/components/prompt-form'
@@ -10,7 +10,7 @@ import { ChatShareDialog } from '@/components/chat-share-dialog'
 import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
-import { UserMessage } from './stocks/message'
+import { UserMessage } from './message'
 
 export interface ChatPanelProps {
   id?: string
@@ -28,10 +28,9 @@ export function ChatPanel({
   setInput,
   isAtBottom,
   scrollToBottom
-}: ChatPanelProps) {
+}: ChatPanelProps): ReactElement {
   const [aiState] = useAIState()
   const [messages, setMessages] = useUIState<typeof AI>()
-  const { submitUserMessage } = useActions()
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
 
   const exampleMessages = [
@@ -41,19 +40,9 @@ export function ChatPanel({
       message: `What are the trending memecoins today?`
     },
     {
-      heading: 'What is the price of',
-      subheading: '$DOGE right now?',
-      message: 'What is the price of $DOGE right now?'
-    },
-    {
-      heading: 'I would like to buy',
-      subheading: '42 $DOGE',
-      message: `I would like to buy 42 $DOGE`
-    },
-    {
-      heading: 'What are some',
-      subheading: `recent events about $DOGE?`,
-      message: `What are some recent events about $DOGE?`
+      heading: 'Test prompt',
+      subheading: 'Test prompt',
+      message: `Test prompt`
     }
   ]
 
@@ -63,46 +52,10 @@ export function ChatPanel({
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
       />
-
-      <div className="mx-auto sm:max-w-2xl sm:px-4">
-        <div className="mb-4 grid grid-cols-2 gap-2 px-4 sm:px-0">
-          {messages.length === 0 &&
-            exampleMessages.map((example, index) => (
-              <div
-                key={example.heading}
-                className={`cursor-pointer rounded-lg border bg-white p-4 hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900 ${
-                  index > 1 && 'hidden md:block'
-                }`}
-                onClick={async () => {
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{example.message}</UserMessage>
-                    }
-                  ])
-
-                  const responseMessage = await submitUserMessage(
-                    example.message
-                  )
-
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    responseMessage
-                  ])
-                }}
-              >
-                <div className="text-sm font-semibold">{example.heading}</div>
-                <div className="text-sm text-zinc-600">
-                  {example.subheading}
-                </div>
-              </div>
-            ))}
-        </div>
-
+      <div className="mx-auto sm:max-w-4xl sm:px-4">
         {messages?.length >= 2 ? (
-          <div className="flex h-12 items-center justify-center">
-            <div className="flex space-x-2">
+          <div className="flex h-2 items-center justify-center">
+            <div className="flex space-x-1">
               {id && title ? (
                 <>
                   <Button
@@ -128,10 +81,24 @@ export function ChatPanel({
             </div>
           </div>
         ) : null}
-
-        <div className="space-y-4 border-t bg-background px-4 py-2 shadow-lg sm:rounded-t-xl sm:border md:py-4">
+        {/* <div className="mb-2 flex overflow-x-auto px-4 sm:px-0">
+          {exampleMessages.map((example, index) => (
+            <div
+              key={example.heading}
+              className={`cursor-pointer min-w-36 w-36 h-16 rounded-lg border bg-white p-4 hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900 mr-4 ${
+                index > 1 && 'hidden md:block'
+              } example-message`} // Added class name for styling
+              onClick={async () => {
+                setInput(example.message)
+              }}
+            >
+              <div className="text-sm font-semibold">{example.heading}</div>
+              <div className="text-sm text-zinc-600">{example.subheading}</div>
+            </div>
+          ))}
+        </div> */}
+        <div className="w-full space-y-4 border-t bg-background px-4 py-2 shadow-lg sm:rounded-t-xl sm:border md:py-4">
           <PromptForm input={input} setInput={setInput} />
-          <FooterText className="hidden sm:block" />
         </div>
       </div>
     </div>

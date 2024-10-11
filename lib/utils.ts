@@ -1,6 +1,10 @@
 import { clsx, type ClassValue } from 'clsx'
 import { customAlphabet } from 'nanoid'
 import { twMerge } from 'tailwind-merge'
+import {openai} from '@ai-sdk/openai'
+import { anthropic } from '@ai-sdk/anthropic'
+import { google } from '@ai-sdk/google'
+import { LanguageModel } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,6 +35,25 @@ export async function fetcher<JSON = any>(
   }
 
   return res.json()
+}
+
+export async function* streamingFetch(input: RequestInfo, init?: RequestInit): AsyncGenerator<string> {
+  const response = await fetch(input, init)
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    try {
+      yield decoder.decode(value)
+    } catch (e: any) {
+      console.warn(e.message)
+    }
+  }
 }
 
 export function formatDate(input: string | number | Date): string {
@@ -86,4 +109,38 @@ export const getMessageFromCode = (resultCode: string) => {
     case ResultCode.UserLoggedIn:
       return 'Logged in!'
   }
+}
+
+export function getModel(provider: string, model: string) : LanguageModel{
+  switch (provider) {
+    case 'openai':
+      return openai(model)
+    case 'anthropic':
+      return anthropic(model) as LanguageModel
+    case 'google':
+      return google(model) as LanguageModel
+    default:
+      return openai(model)
+  }
+}
+
+export function parsePromptArgs(prompt: string): string[] {
+  const regex = /\{([\w\u4e00-\u9fff]+)\}/g; // Adjusted regex to match {var} pattern and include Chinese characters
+  const matchesIterator = prompt.matchAll(regex);
+  const matches = Array.from(matchesIterator); // Convert iterator to array directly
+  const uniqueMatches = Array.from(new Set(matches.map(match => match[1])));
+  return uniqueMatches;
+}
+
+export function replacePromptArgs(prompt: string, args: Record<string, string>): string {
+  return prompt.replace(/\{([\w\u4e00-\u9fff]+)\}/g, (_, key) => args[key] || `{${key}}`);
+} 
+
+export function checkPromptArgs(prompt: string, args: Record<string, string>): boolean {
+  if (prompt.includes('{}')){
+    return false;
+  }
+  const formattedKeys = Object.keys(args).map(key => `{${key}}`);
+  const allKeysExist = formattedKeys.every(key => prompt.includes(key));
+  return allKeysExist
 }
