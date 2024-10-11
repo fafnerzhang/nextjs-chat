@@ -16,17 +16,7 @@ import {
   Stock,
   Purchase
 } from '@/components/stocks'
-
-import { z } from 'zod'
-import { Events } from '@/components/stocks/events'
-import { StocksSkeleton } from '@/components/stocks/stocks-skeleton'
-import { Stocks } from '@/components/stocks/stocks'
-import {
-  formatNumber,
-  runAsyncFnWithoutBlocking,
-  sleep,
-  nanoid
-} from '@/lib/utils'
+import { runAsyncFnWithoutBlocking, nanoid } from '@/lib/utils'
 import { saveChat } from '@/app/actions'
 import {
   SpinnerMessage,
@@ -37,8 +27,8 @@ import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 import { streamingFetch, getModel } from '@/lib/utils'
 import { replacePromptArgs } from '@/lib/utils'
-import { openai } from '@ai-sdk/openai'
 import { MultiSubmitContentProps } from '@/lib/types'
+import { BASE_URL } from '@/lib/constants'
 
 async function streamMultiSubmit(
   prompt: string,
@@ -47,7 +37,6 @@ async function streamMultiSubmit(
   provider: string = 'openai'
 ) {
   'use server'
-
   const aiState = getMutableAIState<typeof AI>()
   aiState.update({
     ...aiState.get(),
@@ -69,7 +58,7 @@ async function streamMultiSubmit(
     }
     console.log(`Prompts in action: ${prompts}`)
 
-    const it = streamingFetch('http://localhost:3000/api/chat', {
+    const it = streamingFetch(`${BASE_URL}/api/chat`, {
       body: JSON.stringify({
         prompts: prompts,
         model: model,

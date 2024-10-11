@@ -43,36 +43,6 @@ export function ChatPanel({
       heading: 'Test prompt',
       subheading: 'Test prompt',
       message: `Test prompt`
-    },
-    {
-      heading: 'What are the',
-      subheading: 'trending memecoins today?',
-      message: `What are the trending memecoins today?`
-    },
-    {
-      heading: 'Test prompt',
-      subheading: 'Test prompt',
-      message: `Test prompt`
-    },
-    {
-      heading: 'What are the',
-      subheading: 'trending memecoins today?',
-      message: `What are the trending memecoins today?`
-    },
-    {
-      heading: 'Test prompt',
-      subheading: 'Test prompt',
-      message: `Test prompt`
-    },
-    {
-      heading: 'What are the',
-      subheading: 'trending memecoins today?',
-      message: `What are the trending memecoins today?`
-    },
-    {
-      heading: 'Test prompt',
-      subheading: 'Test prompt',
-      message: `Test prompt`
     }
   ]
 

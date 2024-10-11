@@ -38,7 +38,7 @@ export function PromptForm({
   const [_, setMessages] = useUIState<typeof AI>()
   const { promptVariables, setPromptVariables } = usePromptVariable()
   const { model, provider } = useModel()
-  const [agentType, setAgentType] = React.useState('multiSubmit')
+  const [agentType, setAgentType] = React.useState('submitUserMessage')
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()

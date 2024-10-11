@@ -1,5 +1,5 @@
 'use client'
-
+import * as XLSX from 'xlsx'
 import { IconOpenAI, IconUser } from '@/components/ui/icons'
 import { cn } from '@/lib/utils'
 import { spinner } from './ui/spinner'
@@ -13,7 +13,8 @@ import { Button } from './ui/button'
 import { IconDownload, IconCopy, IconCheck } from './ui/icons'
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
 import { MultiSubmitContentProps } from '@/lib/types'
-
+import { parseMarkdownTable, isMarkdownTableExists } from '@/lib/md'
+import React from 'react'
 export function UserMessage({ children }: { children: React.ReactNode }) {
   return (
     <div className="group relative flex items-start md:-ml-12">
@@ -27,6 +28,39 @@ export function UserMessage({ children }: { children: React.ReactNode }) {
   )
 }
 
+function s2ab(s: string): ArrayBuffer {
+  const buf = new ArrayBuffer(s.length)
+  const view = new Uint8Array(buf)
+  for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff
+  return buf
+}
+async function handleParseMarkdown(markdown: string) {
+  const tables = parseMarkdownTable(markdown)
+  const workbook = XLSX.utils.book_new()
+  tables.forEach((table, index) => {
+    const worksheetData = [table.header]
+    table.rows.forEach(row => {
+      const rowData = table.header.map(header => row[header] || '')
+      worksheetData.push(rowData)
+    })
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Table${index + 1}`)
+  })
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' })
+  const now = new Date()
+  const datetime = now.toISOString().replace(/[:\-]|\.\d{3}/g, '')
+  const filename = `tables_${datetime}.xlsx`
+  const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 export function BotMessage({
   content,
   className
@@ -34,7 +68,12 @@ export function BotMessage({
   content: string | StreamableValue<string>
   className?: string
 }) {
+  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
   const text = useStreamableText(content)
+  const onCopy = () => {
+    if (isCopied) return
+    copyToClipboard(text)
+  }
   return (
     <div className={cn('group relative flex items-start md:-ml-12', className)}>
       <div className="flex size-[24px] shrink-0 select-none items-center justify-center rounded-md border bg-primary text-primary-foreground shadow-sm">
@@ -82,6 +121,22 @@ export function BotMessage({
         >
           {text}
         </MemoizedReactMarkdown>
+        {isMarkdownTableExists(text) && (
+          <div className="flex items-center justify-start mt-1 rounded-sm">
+            <Button
+              variant={'ghost'}
+              className="rounded-lg	"
+              onClick={() => {
+                handleParseMarkdown(text)
+              }}
+            >
+              <IconDownload />
+            </Button>
+            <Button variant={'ghost'} className="rounded-lg" onClick={onCopy}>
+              {isCopied ? <IconCheck /> : <IconCopy />}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

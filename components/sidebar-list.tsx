@@ -11,7 +11,10 @@ interface SidebarListProps {
 }
 
 const loadChats = cache(async (userId?: string) => {
-  return await getChats(userId)
+  console.log(`userId`, userId)
+  const res = await getChats(userId)
+  console.log(`res`, res)
+  return res
 })
 
 export async function SidebarList({ userId }: SidebarListProps) {

@@ -1,13 +1,6 @@
-import {
-  IconGemini,
-  IconOpenAI,
-  IconAnthropic,
-  IconDownload,
-  IconUpload,
-  IconBookmark
-} from '@/components/ui/icons'
+import { IconGemini, IconOpenAI, IconAnthropic } from '@/components/ui/icons'
 import { ReactElement } from 'react'
-
+export const BASE_URL = 'http://localhost:3000'
 const modelOptions: {
   value: string
   provider: string

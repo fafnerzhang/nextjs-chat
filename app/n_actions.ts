@@ -2,18 +2,14 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-// import { kv } from '@vercel/kv'
-import {Message} from '@/lib/types'
+import { kv } from '@vercel/kv'
+
 import { auth } from '@/auth'
 import { type Chat, type Prompt, type PromptVariables } from '@/lib/types'
-import Redis from 'ioredis'
-
-const kv = new Redis({host: process.env.REDIS_HOST, port: process.env.REDIS_PORT})
-
 
 export async function getChats(userId?: string | null) {
   const session = await auth()
-  console.log(`userId`, userId)
+
   if (!userId) {
     return []
   }
@@ -25,22 +21,19 @@ export async function getChats(userId?: string | null) {
   }
 
   try {
-    const pipeline = kv.pipeline();
-    const chats: string[] = await kv.zrevrange(`user:chat:${userId}`, 0, -1);
-    chats.forEach(chat => pipeline.hgetall(chat));
+    const pipeline = kv.pipeline()
+    const chats: string[] = await kv.zrange(`user:chat:${userId}`, 0, -1, {
+      rev: true
+    })
+
+    for (const chat of chats) {
+      pipeline.hgetall(chat)
+    }
 
     const results = await pipeline.exec()
-    if (!results) {
-      return []
-    }
-    const chatsResult: Chat[] = results.map((result) => {
-      const chat: Chat = result as any;
-      chat.messages = JSON.parse(chat[1].messages) as Message[]
-      return chat[1]
-    })
-    return chatsResult as Chat[]
+
+    return results as Chat[]
   } catch (error) {
-    console.log(`error`, error)
     return []
   }
 }
@@ -54,13 +47,13 @@ export async function getChat(id: string, userId: string) {
     }
   }
 
-  let chat = await kv.hgetall(`chat:${id}`)
+  const chat = await kv.hgetall<Chat>(`chat:${id}`)
 
   if (!chat || (userId && chat.userId !== userId)) {
     return null
   }
-  const res = {...chat, messages: JSON.parse(chat.messages) as Message[]}
-  return res
+
+  return chat
 }
 
 export async function removeChat({ id, path }: { id: string; path: string }) {
@@ -115,7 +108,7 @@ export async function clearChats() {
 }
 
 export async function getSharedChat(id: string) {
-  const chat = await kv.hgetall(`chat:${id}`)
+  const chat = await kv.hgetall<Chat>(`chat:${id}`)
 
   if (!chat || !chat.sharePath) {
     return null
@@ -133,7 +126,7 @@ export async function shareChat(id: string) {
     }
   }
 
-  const chat = await kv.hgetall(`chat:${id}`)
+  const chat = await kv.hgetall<Chat>(`chat:${id}`)
 
   if (!chat || chat.userId !== session.user.id) {
     return {
@@ -156,11 +149,12 @@ export async function saveChat(chat: Chat) {
 
   if (session && session.user) {
     const pipeline = kv.pipeline()
-    const redisChat = {...chat, messages: JSON.stringify(chat.messages)}
-    pipeline.hmset(`chat:${chat.id}`, redisChat)
-    pipeline.zadd(`user:chat:${chat.userId}`, Date.now().toString(), `chat:${chat.id}`)
-    console.log(`saved chatID ${chat.id}`)
-    const res = await pipeline.exec()
+    pipeline.hmset(`chat:${chat.id}`, chat)
+    pipeline.zadd(`user:chat:${chat.userId}`, {
+      score: Date.now(),
+      member: `chat:${chat.id}`
+    })
+    await pipeline.exec()
   } else {
     return
   }
@@ -183,11 +177,11 @@ export async function savePromptForUser(prompt: Prompt) {
   if (session && session.user && session.user.id) {
     const userPromptKey = `user-prompt:${prompt.promptId}`; // Unique key for each user
     const pipeline = kv.pipeline();
-    const promptRedis = {...prompt, args: JSON.stringify(prompt.args)};
-    pipeline.hmset(userPromptKey, promptRedis);
-    pipeline.zadd(`user:prompt:${session.user.id}`, Date.now().toString(),
-      `user-prompt:${prompt.promptId}`
-   )
+    pipeline.hmset(userPromptKey, prompt);
+    pipeline.zadd(`user:prompt:${session.user.id}`, {
+      score: Date.now(),
+      member: `user-prompt:${prompt.promptId}`
+    })
     await pipeline.exec();
     return { success: true };
   } else {
@@ -216,18 +210,7 @@ export async function getPromptsForUser(): Promise<Prompt[]> {
  if (!results) {
    return [];
  }
-const prompts = results.map((result) => {
-  // Check if result is truthy and if its second element is an object
-  if (!result || typeof result[1] !== 'object') {
-    return null;
-  }
-  // Convert the result to a prompt object
-  const res = result[1] as any
-  let prompt = { ...res, args: res.args } as Prompt;
-  return prompt;
-});
-  console.log(`prompts`, prompts)
- return prompts as Prompt[];
+ return results as Prompt[];
 }
 
 export async function removePrompt(promptId: string) {

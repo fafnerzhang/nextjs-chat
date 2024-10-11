@@ -3,7 +3,7 @@ import { customAlphabet } from 'nanoid'
 import { twMerge } from 'tailwind-merge'
 import {openai} from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { google, createGoogleGenerativeAI } from '@ai-sdk/google'
+import { google } from '@ai-sdk/google'
 import { LanguageModel } from 'ai'
 
 export function cn(...inputs: ClassValue[]) {
@@ -129,7 +129,6 @@ export function parsePromptArgs(prompt: string): string[] {
   const matchesIterator = prompt.matchAll(regex);
   const matches = Array.from(matchesIterator); // Convert iterator to array directly
   const uniqueMatches = Array.from(new Set(matches.map(match => match[1])));
-  console.log('Unique matches:', uniqueMatches);
   return uniqueMatches;
 }
 

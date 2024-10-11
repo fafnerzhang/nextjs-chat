@@ -99,13 +99,19 @@ export function PromptAccordion({ prompts = [] }: PromptAccordionProps) {
           className={`dark:bg-background`}
         >
           <AccordionTrigger className="dark:bg-background">
-            <div className="flex dark:bg-background">
-              {prompt.title}
-              <div className="grow w-80"></div>
+            <div className="flex justify-items-start">
+              <div className="w-60 text-left">
+                <div className="truncate ...">{prompt.title}</div>
+              </div>
+              <div className="grow w-24"></div>
               <div className="flex max-w-52 overflow-scroll no-scrollbar text-primary-foreground dark:bg-background">
-                {prompt.args.length > 0 &&
+                {prompt.args &&
+                  prompt.args.length > 0 &&
                   prompt.args.map((arg, index) => (
-                    <Badge key={index} className="ml-1 text-secondary">
+                    <Badge
+                      key={index}
+                      className="ml-1 text-secondary justify-items-start"
+                    >
                       {arg}
                     </Badge>
                   ))}

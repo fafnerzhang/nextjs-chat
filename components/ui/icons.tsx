@@ -4,6 +4,59 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+function IconAlignLeft({
+  className,
+  inverted,
+  ...props
+}: React.ComponentProps<'svg'> & { inverted?: boolean }) {
+  const id = React.useId()
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="40"
+        y1="40"
+        x2="40"
+        y2="216"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="72"
+        y="56"
+        width="112"
+        height="56"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <rect
+        x="72"
+        y="144"
+        width="152"
+        height="56"
+        rx="8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
 function IconNextChat({
   className,
   inverted,
@@ -263,6 +316,67 @@ function IconArrowDown({ className, ...props }: React.ComponentProps<'svg'>) {
       {...props}
     >
       <path d="m205.66 149.66-72 72a8 8 0 0 1-11.32 0l-72-72a8 8 0 0 1 11.32-11.32L120 196.69V40a8 8 0 0 1 16 0v156.69l58.34-58.35a8 8 0 0 1 11.32 11.32Z" />
+    </svg>
+  )
+}
+
+function IconClockwise({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <polyline
+        points="184 104 232 104 232 56"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <path
+        d="M188.4,192a88,88,0,1,1,1.83-126.23L232,104"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+    </svg>
+  )
+}
+
+function IconArrowUp({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      className={cn('size-4', className)}
+      {...props}
+    >
+      <rect width="256" height="256" fill="none" />
+      <line
+        x1="128"
+        y1="216"
+        x2="128"
+        y2="40"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
+      <polyline
+        points="56 112 128 40 200 112"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
+      />
     </svg>
   )
 }
@@ -781,6 +895,7 @@ export {
   IconSeparator,
   IconArrowDown,
   IconArrowRight,
+  IconArrowUp,
   IconUser,
   IconPlus,
   IconNetwork,
@@ -806,5 +921,7 @@ export {
   IconGemini,
   IconAnthropic,
   IconPrompt,
-  IconBookmark
+  IconBookmark,
+  IconClockwise,
+  IconAlignLeft
 }
