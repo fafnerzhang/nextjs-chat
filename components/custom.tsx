@@ -25,7 +25,6 @@ import { useSheets, SheetsContextType } from '@/components/table/sheet'
 import { Sheet } from './ui/sheet'
 import { set } from 'date-fns'
 import { useInput, InputContextType } from '@/components/input'
-
 export function ToolBar() {
   const { input, setInput } = useInput() as InputContextType
   const [promptDialogOpen, setPromptDialogOpen] = useState(false)
