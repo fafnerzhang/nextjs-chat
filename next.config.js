@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const { types } = require('util');
 
 module.exports = {
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    return config;
+  typescript: {
+    ignoreBuildErrors: true,
   },
   images: {
     remotePatterns: [

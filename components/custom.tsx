@@ -161,7 +161,7 @@ export function FileUpload() {
       {isDragging ? (
         <div>Drop the files here ...</div>
       ) : (
-        <div>Drag 'n' drop some files here, or click to select files</div>
+        <div>{`Drag 'n' drop some files here, or click to select files`}</div>
       )}
       <input
         type="file"
