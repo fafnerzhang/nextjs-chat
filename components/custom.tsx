@@ -25,6 +25,7 @@ import { useSheets, SheetsContextType } from '@/components/table/sheet'
 import { Sheet } from './ui/sheet'
 import { set } from 'date-fns'
 import { useInput, InputContextType } from '@/components/input'
+
 export function ToolBar() {
   const { input, setInput } = useInput() as InputContextType
   const [promptDialogOpen, setPromptDialogOpen] = useState(false)
@@ -161,7 +162,7 @@ export function FileUpload() {
       {isDragging ? (
         <div>Drop the files here ...</div>
       ) : (
-        <div>Drag 'n' drop some files here, or click to select files</div>
+        <div>{`Drag 'n' drop some files here, or click to select files`}</div>
       )}
       <input
         type="file"

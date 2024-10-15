@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: /bin/sh -c "npm install -g pnpm && pnpm install && pnpm run build && pnpm start"
+  redis:
+    image: redis:7.0.4-alpine

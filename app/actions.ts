@@ -1,19 +1,14 @@
 'use server'
-
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-// import { kv } from '@vercel/kv'
 import {Message} from '@/lib/types'
 import { auth } from '@/auth'
 import { type Chat, type Prompt, type PromptVariables } from '@/lib/types'
-import Redis from 'ioredis'
-
-const kv = new Redis({host: process.env.REDIS_HOST, port: process.env.REDIS_PORT})
+import { baseURL } from '@/lib/utils'
 
 
 export async function getChats(userId?: string | null) {
   const session = await auth()
-  console.log(`userId`, userId)
   if (!userId) {
     return []
   }
@@ -25,20 +20,15 @@ export async function getChats(userId?: string | null) {
   }
 
   try {
-    const pipeline = kv.pipeline();
-    const chats: string[] = await kv.zrevrange(`user:chat:${userId}`, 0, -1);
-    chats.forEach(chat => pipeline.hgetall(chat));
-
-    const results = await pipeline.exec()
-    if (!results) {
+    const encodedUserId = encodeURIComponent(userId)
+    const res = await fetch(`${baseURL}/api/action/chat?userId=${encodedUserId}`, {
+      method: 'GET'
+    })
+    if (!res.ok) {
       return []
     }
-    const chatsResult: Chat[] = results.map((result) => {
-      const chat: Chat = result as any;
-      chat.messages = JSON.parse(chat[1].messages) as Message[]
-      return chat[1]
-    })
-    return chatsResult as Chat[]
+    const { chats } = await res.json()
+    return chats as Chat[]
   } catch (error) {
     console.log(`error`, error)
     return []
@@ -53,14 +43,16 @@ export async function getChat(id: string, userId: string) {
       error: 'Unauthorized'
     }
   }
-
-  let chat = await kv.hgetall(`chat:${id}`)
-
-  if (!chat || (userId && chat.userId !== userId)) {
+  const encodedUserId = encodeURIComponent(userId)
+  const encodedChatId = encodeURIComponent(id)
+  const res = await fetch(`${baseURL}/api/action/chat?userId=${encodedUserId}&chatId=${encodedChatId}`, {
+    method: 'GET'
+  })
+  if (!res.ok) {
     return null
   }
-  const res = {...chat, messages: JSON.parse(chat.messages) as Message[]}
-  return res
+  const { chat } = await res.json()
+  return chat as Chat
 }
 
 export async function removeChat({ id, path }: { id: string; path: string }) {
@@ -72,18 +64,14 @@ export async function removeChat({ id, path }: { id: string; path: string }) {
     }
   }
 
-  // Convert uid to string for consistent comparison with session.user.id
-  const uid = String(await kv.hget(`chat:${id}`, 'userId'))
-
-  if (uid !== session?.user?.id) {
+  const res = await fetch(`${baseURL}/api/action/chat?chatId=${id}`, {
+    method: 'DELETE'
+  })
+  if (!res.ok) {
     return {
-      error: 'Unauthorized'
+      error: 'Something went wrong'
     }
   }
-
-  await kv.del(`chat:${id}`)
-  await kv.zrem(`user:chat:${session.user.id}`, `chat:${id}`)
-
   revalidatePath('/')
   return revalidatePath(path)
 }
@@ -96,31 +84,29 @@ export async function clearChats() {
       error: 'Unauthorized'
     }
   }
-
-  const chats: string[] = await kv.zrange(`user:chat:${session.user.id}`, 0, -1)
-  if (!chats.length) {
-    return redirect('/')
+  const res = await fetch(`${baseURL}/api/action/chat?userId=${session.user.id}`, {
+    method: 'DELETE'
+  })
+  if (!res.ok) {
+    return {
+      error: 'Something went wrong'
+    }
   }
-  const pipeline = kv.pipeline()
-
-  for (const chat of chats) {
-    pipeline.del(chat)
-    pipeline.zrem(`user:chat:${session.user.id}`, chat)
+  const {chats} = await res.json()
+  if (chats.length) {
+    revalidatePath('/')
   }
-
-  await pipeline.exec()
-
-  revalidatePath('/')
   return redirect('/')
 }
 
 export async function getSharedChat(id: string) {
-  const chat = await kv.hgetall(`chat:${id}`)
-
-  if (!chat || !chat.sharePath) {
+  const res = await fetch(`${baseURL}/api/action/share?chatId=${id}`, {
+    method: 'GET'
+  })
+  if (!res.ok) {
     return null
-  }
-
+  } 
+  const { chat, message } = await res.json()
   return chat
 }
 
@@ -132,35 +118,31 @@ export async function shareChat(id: string) {
       error: 'Unauthorized'
     }
   }
-
-  const chat = await kv.hgetall(`chat:${id}`)
-
-  if (!chat || chat.userId !== session.user.id) {
+  const res = await fetch(`${baseURL}/api/action/share?chatId=${id}`, {
+    method: 'POST'
+  })
+  if (!res.ok) {
     return {
       error: 'Something went wrong'
     }
   }
-
-  const payload = {
-    ...chat,
-    sharePath: `/share/${chat.id}`
-  }
-
-  await kv.hmset(`chat:${chat.id}`, payload)
-
-  return payload
+  const { chat } = await res.json()
+  return chat
 }
 
 export async function saveChat(chat: Chat) {
   const session = await auth()
 
   if (session && session.user) {
-    const pipeline = kv.pipeline()
-    const redisChat = {...chat, messages: JSON.stringify(chat.messages)}
-    pipeline.hmset(`chat:${chat.id}`, redisChat)
-    pipeline.zadd(`user:chat:${chat.userId}`, Date.now().toString(), `chat:${chat.id}`)
+    const res = await fetch(`${baseURL}/api/action/chat`, {
+      method: 'POST',
+      body: JSON.stringify(chat)
+    })
+    if (!res.ok) {
+      console.log(`error`, res)
+      return
+    }
     console.log(`saved chatID ${chat.id}`)
-    const res = await pipeline.exec()
   } else {
     return
   }
